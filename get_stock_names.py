@@ -7,7 +7,7 @@ symbols = {}
 for ch in "abcdefghijklmnopqrstuvwxyz":
     char_symbols = []
 
-    url = f"https://www.advfn.com/nasdaq/nasdaq.asp?companies={ch.upper()}"
+    url = f"https://www.advfn.com/nyse/newyorkstockexchange.asp?companies={ch.upper()}"
     print("requesting", url, "...")
 
     resp = requests.get(url)
@@ -32,4 +32,4 @@ for ch in "abcdefghijklmnopqrstuvwxyz":
 
     print("loaded:", len(symbols), "symbols")
 
-print(json.dumps(symbolsf))
+print(json.dumps(symbols))
