@@ -2,57 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/darmiel/macd-api/csv"
 	"github.com/jlaffaye/ftp"
 	"io/ioutil"
 	"strings"
 	"time"
 )
-
-// ftp.nasdaqtrader.com/Symboldirectory/nasdaqlisted.txt
-// ftp.nasdaqtrader.com/Symboldirectory/otherlisted.txt
-//
-const FTPFile = "Symboldirectory/nasdaqlisted.txt"
-
-// Market Category
-const (
-	NASDAQGlobalSelectMarketSM = "Q"
-	NASDAQGlobalMarketSM       = "G"
-	NASDAQCapitalMarket        = "S"
-)
-
-// Financial Status
-const (
-	Deficient                      = "D"
-	Delinquent                     = "E"
-	Bankrupt                       = "Q"
-	Normal                         = "N"
-	DeficientAndBankrupt           = "G"
-	DeficientAndDelinquent         = "H"
-	DelinquentAndBankrupt          = "J"
-	DeficientDelinquentAndBankrupt = "K"
-)
-
-type NASDAQSecurity struct {
-	Symbol          string
-	SecurityName    string
-	MarketCategory  string
-	TestIssue       bool
-	FinancialStatus string
-	RoundLot        string
-	ETF             bool
-	NextShares      bool
-}
-
-type OtherSecurity struct {
-	ACTSymbol    string
-	SecurityName string
-	Exchange     string
-	CQSSymbol    string
-	ETF          bool
-	RoundLot     string
-	TestIssue    bool
-	NASDAQSymbol string
-}
 
 func main() {
 	fmt.Println("Connecting to FTP ...")
@@ -65,9 +20,9 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Retrieving file:", FTPFile)
+	fmt.Println("Retrieving file:", FTPFileNASDAQ)
 	var resp *ftp.Response
-	if resp, err = conn.Retr(FTPFile); err != nil {
+	if resp, err = conn.Retr(FTPFileNASDAQ); err != nil {
 		panic(err)
 	}
 
@@ -78,27 +33,17 @@ func main() {
 	}
 
 	fmt.Println("Parsing file ...")
-	for i, line := range strings.Split(string(buf), "\n") {
-		// skip header
-		if i == 0 {
-			continue
-		}
-		spl := strings.Split(line, "|")
-		if len(spl) != 8 {
-			fmt.Println("ERR", line)
-			continue
-		}
-
-		sec := &NASDAQSecurity{
-			Symbol:          spl[0],
-			SecurityName:    spl[1],
-			MarketCategory:  spl[2],
-			TestIssue:       spl[3] == "Y",
-			FinancialStatus: spl[4],
-			RoundLot:        spl[5],
-			ETF:             spl[6] == "Y",
-			NextShares:      spl[7] == "Y",
-		}
-		fmt.Printf("+ %+v\n", sec)
+	var parse *csv.CSVFile
+	if parse, err = csv.Parse(buf, &csv.ParseOptions{
+		Separator:  '|',
+		CleanSpace: true,
+		Blacklist:  []string{"File Creation Time: "},
+	}); err != nil {
+		panic(err)
 	}
+	fmt.Println("--------------------------------")
+	for i, v := range parse.Values {
+		fmt.Println(i, "=", strings.Join(v, " :: "))
+	}
+	fmt.Println(strings.Join(parse.Headers, " | "))
 }
