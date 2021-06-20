@@ -42,8 +42,18 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("--------------------------------")
-	for i, v := range parse.Values {
-		fmt.Println(i, "=", strings.Join(v, " :: "))
+
+	var out []*NASDAQSecurity
+	for i, v := range parse.Rows {
+		dummy := new(NASDAQSecurity)
+		if err = v.Unmarshal(dummy); err != nil {
+			panic(err)
+		}
+		out = append(out, dummy)
+		if dummy.ETF {
+			fmt.Printf("%d :: %+v\n", i, dummy)
+		}
 	}
 	fmt.Println(strings.Join(parse.Headers, " | "))
+	fmt.Println("Parsed:", len(out), "securities.")
 }

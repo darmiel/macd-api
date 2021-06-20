@@ -2,12 +2,19 @@ package csv
 
 import (
 	"fmt"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
+type CSVRow struct {
+	Headers *[]string
+	Values  []string
+}
+
 type CSVFile struct {
 	Headers   []string
-	Values    [][]string
+	Rows      []*CSVRow
 	Separator string
 }
 
@@ -121,8 +128,71 @@ func Parse(buf []byte, options ...*ParseOptions) (res *CSVFile, err error) {
 			}
 		}
 
-		res.Values = append(res.Values, data)
+		res.Rows = append(res.Rows, &CSVRow{Headers: &res.Headers, Values: data})
 	}
 
+	return
+}
+
+func toBool(str string) bool {
+	switch strings.ToLower(str) {
+	case "y", "yes", "1", "true":
+		return true
+	}
+	return false
+}
+
+func (r *CSVRow) Unmarshal(target interface{}) (err error) {
+	rv := reflect.ValueOf(target)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return fmt.Errorf("invalid type: %T", target)
+	}
+	if !rv.IsValid() {
+		return fmt.Errorf("target is invalid")
+	}
+
+	vo := reflect.ValueOf(target).Elem()
+	to := vo.Type()
+
+	num := vo.NumField()
+	for i := 0; i < num; i++ {
+		tf := to.Field(i)
+		vf := vo.Field(i)
+		exp := tf.Tag.Get("csv") // tag
+
+		// skip if no csv tag attached
+		if exp == "" || exp == "-" {
+			continue
+		}
+
+		var index = -1
+		for j, h := range *r.Headers {
+			if strings.EqualFold(h, exp) {
+				index = j
+				break
+			}
+		}
+		// field not found
+		if index < 0 {
+			continue
+		}
+
+		// get value
+		value := r.Values[index]
+
+		switch vf.Kind() {
+		case reflect.String:
+			vf.SetString(value)
+		case reflect.Bool:
+			bf := toBool(value)
+			vf.SetBool(bf)
+		case reflect.Int, reflect.Int64:
+			var iv int
+			if iv, err = strconv.Atoi(value); err != nil {
+				return
+			}
+			vf.SetInt(int64(iv))
+		}
+	}
 	return
 }

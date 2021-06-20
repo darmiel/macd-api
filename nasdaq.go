@@ -22,12 +22,12 @@ const (
 )
 
 type NASDAQSecurity struct {
-	Symbol          string
-	SecurityName    string
-	MarketCategory  string
-	TestIssue       bool
-	FinancialStatus string
-	RoundLot        string
-	ETF             bool
-	NextShares      bool
+	Symbol          string `csv:"Symbol"`
+	SecurityName    string `csv:"Security Name"`
+	MarketCategory  string `csv:"Market Category"`
+	TestIssue       bool   `csv:"Test Issue"`
+	FinancialStatus string `csv:"Financial Status"`
+	RoundLot        string `csv:"Round Lot Size"`
+	ETF             bool   `csv:"ETF"`
+	NextShares      bool   `csv:"NextShares"`
 }
