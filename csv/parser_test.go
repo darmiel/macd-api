@@ -29,3 +29,39 @@ func Test_escapedRuneSplit(t *testing.T) {
 		})
 	}
 }
+
+func TestParseUnmarshal(t *testing.T) {
+	const data = `Name|Age
+Max|20
+John|31
+Jim|420`
+
+	type T struct {
+		Name string `csv:"Name"`
+		Age  int    `csv:"Age"`
+	}
+
+	expected := []*T{{"Max", 20}, {"John", 31}, {"Jim", 420}}
+
+	parse, err := Parse([]byte(data), &ParseOptions{
+		Separator: '|',
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var out []*T
+	for _, row := range parse.Rows {
+		trg := new(T)
+		if err = row.Unmarshal(trg); err != nil {
+			t.Error(err)
+			return
+		}
+		out = append(out, trg)
+	}
+
+	if !reflect.DeepEqual(expected, out) {
+		t.Errorf("out = %v, want expected = %v", out, expected)
+	}
+}
