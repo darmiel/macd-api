@@ -1,3 +1,7 @@
-/keys.txt
-/gen_api_keys.py
 /.idea
+
+# Scripts
+/scripts/gen_api_keys.py
+
+# Keys
+/data/keys.txt
