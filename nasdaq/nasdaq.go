@@ -1,4 +1,4 @@
-package main
+package nasdaq
 
 const FTPFileNASDAQ = "Symboldirectory/nasdaqlisted.txt"
 

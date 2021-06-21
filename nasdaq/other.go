@@ -1,4 +1,4 @@
-package main
+package nasdaq
 
 const FTPFileOther = "Symboldirectory/otherlisted.txt"
 
