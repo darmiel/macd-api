@@ -74,7 +74,7 @@ func requestPack(id int, pack []*NASDAQSecurity, wg *sync.WaitGroup) {
 	for i := 0; i < len(pack); i++ {
 		s := pack[i]
 
-		url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?formatted=true&interval=1d&range=1y", s.Symbol)
+		url := fmt.Sprintf("", s.Symbol)
 
 		mu.Lock()
 		curNum++

@@ -3,9 +3,34 @@ package yahoo
 import (
 	"errors"
 	"fmt"
+	"github.com/imroc/req"
+	"gorm.io/gorm"
 )
 
-type Response struct {
+func RequestHistorical(symbol, interval, rng string) (resp []*Historical, err error) {
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?formatted=true&interval=%s&range=%s",
+		symbol, interval, rng)
+
+	var http *req.Resp
+	if http, err = req.Get(url); err != nil {
+		if http != nil {
+			fmt.Println("WARN :: Invalid response:", http.String())
+		} else {
+			fmt.Println("WARN :: Invalid response ¯\\_(ツ)_/¯")
+		}
+		return
+	}
+
+	hr := new(HistoricalResponse)
+	if err = http.ToJSON(hr); err != nil {
+		return
+	}
+
+	resp, err = hr.To()
+	return
+}
+
+type HistoricalResponse struct {
 	Chart struct {
 		Result []struct {
 			Meta struct {
@@ -18,14 +43,14 @@ type Response struct {
 				DataGranularity      string `json:"dataGranularity"`
 				Range                string `json:"range"`
 			} `json:"meta"`
-			Timestamp  []uint64 `json:"timestamp"`
+			Timestamp  []int64 `json:"timestamp"`
 			Indicators struct {
 				Quote []struct {
-					High   []float64 `json:"high"`
-					Low    []float64 `json:"low"`
+					High   []float32 `json:"high"`
+					Low    []float32 `json:"low"`
 					Volume []int     `json:"volume"`
-					Close  []float64 `json:"close"`
-					Open   []float64 `json:"open"`
+					Close  []float32 `json:"close"`
+					Open   []float32 `json:"open"`
 				} `json:"quote"`
 			} `json:"indicators"`
 		} `json:"result"`
@@ -33,14 +58,15 @@ type Response struct {
 	} `json:"chart"`
 }
 
-type WrappedIndicators struct {
+type Historical struct {
+	gorm.Model
 	Symbol    string
-	Timestamp uint64
-	High      float64
-	Low       float64
+	Timestamp int64
+	High      float32
+	Low       float32
 	Volume    int
-	Close     float64
-	Open      float64
+	Close     float32
+	Open      float32
 }
 
 var (
@@ -52,7 +78,7 @@ var (
 	ErrOpenEmpty       = errors.New("opens empty")
 )
 
-func (r *Response) To() (w []*WrappedIndicators, err error) {
+func (r *HistoricalResponse) To() (w []*Historical, err error) {
 	if r.Chart.Result == nil {
 		return nil, ErrInvalidResponse
 	}
@@ -62,12 +88,12 @@ func (r *Response) To() (w []*WrappedIndicators, err error) {
 
 	var (
 		symbol     string
-		timestamps []uint64
-		highs      []float64
-		lows       []float64
+		timestamps []int64
+		highs      []float32
+		lows       []float32
 		volumes    []int
-		closes     []float64
-		opens      []float64
+		closes     []float32
+		opens      []float32
 	)
 
 	//
@@ -116,7 +142,7 @@ func (r *Response) To() (w []*WrappedIndicators, err error) {
 	}
 
 	for i, t := range timestamps {
-		w = append(w, &WrappedIndicators{
+		w = append(w, &Historical{
 			Symbol:    symbol,
 			Timestamp: t,
 			High:      highs[i],
