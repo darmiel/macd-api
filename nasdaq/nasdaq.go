@@ -1,6 +1,35 @@
 package nasdaq
 
+import (
+	"github.com/darmiel/macd-api/csv"
+)
+
 const FTPFileNASDAQ = "Symboldirectory/nasdaqlisted.txt"
+
+func FetchNASDAQ() (out []*NASDAQSecurity, err error) {
+	var buf []byte
+	if buf, err = FetchFile(FTPFileNASDAQ); err != nil {
+		return
+	}
+
+	var parse *csv.CSVFile
+	if parse, err = csv.Parse(buf, &csv.ParseOptions{
+		Separator:  '|',
+		CleanSpace: true,
+		Blacklist:  []string{"File Creation Time: "},
+	}); err != nil {
+		return
+	}
+
+	for _, v := range parse.Rows {
+		dummy := new(NASDAQSecurity)
+		if err = v.Unmarshal(dummy); err != nil {
+			panic(err)
+		}
+		out = append(out, dummy)
+	}
+	return
+}
 
 // Market Category
 const (
@@ -20,14 +49,3 @@ const (
 	DelinquentAndBankrupt          = "J"
 	DeficientDelinquentAndBankrupt = "K"
 )
-
-type NASDAQSecurity struct {
-	Symbol          string `csv:"Symbol"`
-	SecurityName    string `csv:"Security Name"`
-	MarketCategory  string `csv:"Market Category"`
-	TestIssue       bool   `csv:"Test Issue"`
-	FinancialStatus string `csv:"Financial Status"`
-	RoundLot        string `csv:"Round Lot Size"`
-	ETF             bool   `csv:"ETF"`
-	NextShares      bool   `csv:"NextShares"`
-}
