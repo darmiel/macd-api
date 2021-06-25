@@ -2,6 +2,7 @@ package csv
 
 import (
 	"fmt"
+	"github.com/darmiel/macd-api/common"
 	"reflect"
 	"strconv"
 	"strings"
@@ -83,6 +84,7 @@ func Parse(buf []byte, options ...*ParseOptions) (res *CSVFile, err error) {
 	res = new(CSVFile)
 	var hlen int
 
+LineLoop:
 	for i, line := range strings.Split(string(buf), "\n") {
 		// skip empty lines
 		if len(strings.TrimSpace(line)) == 0 {
@@ -104,28 +106,22 @@ func Parse(buf []byte, options ...*ParseOptions) (res *CSVFile, err error) {
 			continue
 		}
 
+		// Blacklist checking
+		if chkbl {
+			for _, b := range opt.Blacklist {
+				if strings.Contains(line, b) {
+					continue LineLoop
+				}
+			}
+		}
+
 		// row
 		if len(data) != hlen {
 			// invalid line
 			// raise error?
-			fmt.Println("ERR: Line", i+1, "has an invalid amount of data")
+			fmt.Println(common.Error(), "csv :: Line", i+1, "has an invalid amount of data:")
+			fmt.Println(common.Error(), line)
 			continue
-		}
-
-		// Blacklist checking
-		if chkbl {
-			skip := false
-			for _, d := range data {
-				for _, b := range opt.Blacklist {
-					if strings.Contains(d, b) {
-						skip = true
-						break
-					}
-				}
-			}
-			if skip {
-				continue
-			}
 		}
 
 		res.Rows = append(res.Rows, &CSVRow{Headers: &res.Headers, Values: data})

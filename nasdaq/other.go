@@ -2,13 +2,14 @@ package nasdaq
 
 import (
 	"github.com/darmiel/macd-api/csv"
+	"github.com/jlaffaye/ftp"
 )
 
 const FTPFileOther = "Symboldirectory/otherlisted.txt"
 
-func FetchOther() (out []*OtherSecurity, err error) {
+func FetchOther(conn *ftp.ServerConn) (out []*OtherSecurity, err error) {
 	var buf []byte
-	if buf, err = FetchFile(FTPFileOther); err != nil {
+	if buf, err = FetchFile(conn, FTPFileOther); err != nil {
 		return
 	}
 
@@ -16,7 +17,7 @@ func FetchOther() (out []*OtherSecurity, err error) {
 	if parse, err = csv.Parse(buf, &csv.ParseOptions{
 		Separator:  '|',
 		CleanSpace: true,
-		Blacklist:  []string{"File Creation Time: "},
+		Blacklist:  []string{"File Creation Time:"},
 	}); err != nil {
 		return
 	}

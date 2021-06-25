@@ -1,6 +1,8 @@
 package nasdaq
 
-import "regexp"
+import (
+	"regexp"
+)
 
 var SecurityPattern = regexp.MustCompile("^[A-Z]{1,5}$")
 
@@ -13,6 +15,16 @@ type SecurityModel interface {
 
 func IsSymbolValid(m SecurityModel) bool {
 	return SecurityPattern.MatchString(m.Symbol())
+}
+
+func IsModelAccepted(m SecurityModel) bool {
+	if m.IsETF() || !IsSymbolValid(m) {
+		return false
+	}
+	if m.Exchange() != "NASDAQ" && m.Exchange() != NYSE {
+		return false
+	}
+	return true
 }
 
 ////////////////////////////////////////////////////

@@ -2,13 +2,14 @@ package nasdaq
 
 import (
 	"github.com/darmiel/macd-api/csv"
+	"github.com/jlaffaye/ftp"
 )
 
 const FTPFileNASDAQ = "Symboldirectory/nasdaqlisted.txt"
 
-func FetchNASDAQ() (out []*NASDAQSecurity, err error) {
+func FetchNASDAQ(conn *ftp.ServerConn) (out []*NASDAQSecurity, err error) {
 	var buf []byte
-	if buf, err = FetchFile(FTPFileNASDAQ); err != nil {
+	if buf, err = FetchFile(conn, FTPFileNASDAQ); err != nil {
 		return
 	}
 

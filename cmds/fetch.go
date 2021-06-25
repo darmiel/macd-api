@@ -20,10 +20,7 @@ func init() {
 			}
 			var c int
 			for _, m := range models {
-				if m.IsETF() || !nasdaq.IsSymbolValid(m) {
-					continue
-				}
-				if m.Exchange() != "NASDAQ" && m.Exchange() != nasdaq.NYSE {
+				if !nasdaq.IsModelAccepted(m) {
 					continue
 				}
 				fmt.Println(common.Prefix(fmt.Sprintf("%-5s", m.Symbol())), m.Exchange(), "::", m.SecurityName())

@@ -1,21 +1,35 @@
 package nasdaq
 
 import (
+	"fmt"
+	"github.com/darmiel/macd-api/common"
 	"github.com/jlaffaye/ftp"
 	"io/ioutil"
 	"time"
 )
 
-func FetchFile(rfile string) (buf []byte, err error) {
-	var conn *ftp.ServerConn
-	if conn, err = ftp.Dial("ftp.nasdaqtrader.com:21", ftp.DialWithTimeout(5*time.Second)); err != nil {
+func Connection() (conn *ftp.ServerConn, err error) {
+	if conn, err = ftp.Dial("ftp.nasdaqtrader.com:21", ftp.DialWithTimeout(10*time.Second)); err != nil {
 		return
 	}
 	if err = conn.Login("anonymous", "anonymous"); err != nil {
 		return
 	}
+	return
+}
+
+func MustConnection() *ftp.ServerConn {
+	conn, err := Connection()
+	if err != nil {
+		panic(err)
+	}
+	return conn
+}
+
+func FetchFile(conn *ftp.ServerConn, rfile string) (buf []byte, err error) {
 	var resp *ftp.Response
 	if resp, err = conn.Retr(rfile); err != nil {
+		fmt.Println("errrr:", err)
 		return
 	}
 	buf, err = ioutil.ReadAll(resp)
@@ -29,10 +43,14 @@ func FetchAll() (out []SecurityModel, err error) {
 		index int
 	)
 
-	if nd, err = FetchNASDAQ(); err != nil {
+	fmt.Println(common.Info(), "Fetching NASDAQ ...")
+	if nd, err = FetchNASDAQ(MustConnection()); err != nil {
+		fmt.Println(common.Error(), "Error:", err)
 		return
 	}
-	if ot, err = FetchOther(); err != nil {
+	fmt.Println(common.Info(), "Fetching Other ...")
+	if ot, err = FetchOther(MustConnection()); err != nil {
+		fmt.Println(common.Error(), "Error:", err)
 		return
 	}
 
@@ -47,5 +65,17 @@ func FetchAll() (out []SecurityModel, err error) {
 		index++
 	}
 
+	return
+}
+func FetchAllAccepted() (out []SecurityModel, err error) {
+	var all []SecurityModel
+	if all, err = FetchAll(); err != nil {
+		return
+	}
+	for _, a := range all {
+		if IsModelAccepted(a) {
+			out = append(out, a)
+		}
+	}
 	return
 }

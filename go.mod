@@ -3,6 +3,7 @@ module github.com/darmiel/macd-api
 go 1.16
 
 require (
+	github.com/cheggaaa/pb/v3 v3.0.8 // indirect
 	github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f // indirect
 	github.com/imroc/req v0.3.0
 	github.com/jackc/pgproto3/v2 v2.1.0 // indirect
