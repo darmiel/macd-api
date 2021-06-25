@@ -17,9 +17,10 @@ func init() {
 		Action: func(ctx *cli.Context) (err error) {
 			// settings
 			var (
-				StgRange    = ctx.String("range")
-				StgInterval = ctx.String("interval")
-				StgMax      = ctx.Int("max")
+				StgRange     = ctx.String("range")
+				StgInterval  = ctx.String("interval")
+				StgMax       = ctx.Int("max")
+				StgGroupSize = ctx.Int("gsize")
 			)
 
 			fmt.Println(common.Info(), "Fetching ...")
@@ -48,7 +49,7 @@ func init() {
 
 			// start progressbar
 			bar := pb.StartNew(len(ifa))
-			common.DistributedGoroutine(ifa, 15, func(arr []interface{}) {
+			common.DistributedGoroutine(ifa, StgGroupSize, func(arr []interface{}) {
 				wg.Add(1)
 
 				go func() {
@@ -83,6 +84,7 @@ func init() {
 			&cli.StringFlag{Name: "range", Value: "90d"},
 			&cli.StringFlag{Name: "interval", Value: "1d"},
 			&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
+			&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsizei)"},
 		},
 	})
 }
