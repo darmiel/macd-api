@@ -47,8 +47,10 @@ func init() {
 				wg          sync.WaitGroup
 			)
 
+			var errarr []string
+
 			// start progressbar
-			bar := pb.StartNew(len(ifa))
+			bar := pb.Full.Start(len(ifa))
 			common.DistributedGoroutine(ifa, StgGroupSize, func(arr []interface{}) {
 				wg.Add(1)
 
@@ -61,7 +63,12 @@ func init() {
 						}
 						historical, err = yahoo.RequestHistorical(m.Symbol(), StgInterval, StgRange)
 						if err != nil {
-							fmt.Println(common.Error(), "Symbol", m.Symbol(), "invalid response:", err)
+							msg := fmt.Sprintln(common.Error(), "Symbol", m.Symbol(), "invalid response:", err)
+							errarr = append(errarr, msg)
+							if len(errarr) > 30 {
+								// print if more than 30 errors
+								fmt.Print(msg)
+							}
 							continue
 						}
 						bar.Increment()
@@ -77,6 +84,15 @@ func init() {
 			// end progressbar
 			bar.Finish()
 
+			if len(errarr) > 0 {
+				fmt.Println(common.Info(), "Got", len(errarr), "error responses:")
+				fmt.Println("---")
+				for _, e := range errarr {
+					fmt.Print(e)
+				}
+				fmt.Println("---")
+			}
+
 			fmt.Println(common.Info(), "Loaded", len(historicals), "historical data")
 			return nil
 		},
@@ -84,7 +100,7 @@ func init() {
 			&cli.StringFlag{Name: "range", Value: "90d"},
 			&cli.StringFlag{Name: "interval", Value: "1d"},
 			&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
-			&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsizei)"},
+			&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
 		},
 	})
 }
