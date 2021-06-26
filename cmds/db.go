@@ -7,6 +7,7 @@ import (
 	"github.com/darmiel/macd-api/nasdaq"
 	"github.com/darmiel/macd-api/yahoo"
 	"github.com/urfave/cli/v2"
+	"gorm.io/gorm/clause"
 	"sync"
 )
 
@@ -22,6 +23,15 @@ func init() {
 				StgMax       = ctx.Int("max")
 				StgGroupSize = ctx.Int("gsize")
 			)
+
+			// connecting to database
+			fmt.Println(common.Info(), "Connecting to database ...")
+			db := common.MustPostgres()
+
+			fmt.Println(common.Info(), "Auto Migrate Table ...")
+			if err = db.AutoMigrate(&yahoo.Historical{}); err != nil {
+				panic(err)
+			}
 
 			fmt.Println(common.Info(), "Fetching ...")
 			var models []nasdaq.SecurityModel
@@ -75,6 +85,18 @@ func init() {
 						hmu.Lock()
 						historicals = append(historicals, historical...)
 						hmu.Unlock()
+
+						// save to db
+						tx := db.Clauses(clause.OnConflict{
+							Columns:   []clause.Column{{Name: "symbol"}, {Name: "date"}},
+							UpdateAll: true,
+						}).CreateInBatches(historical, 100)
+						if tx.Error != nil {
+							fmt.Println(common.Error(), "sql ::", tx.Error)
+							fmt.Println(common.Error(), tx.Statement.SQL.String())
+						} else {
+							fmt.Println(common.Info(), "sql :: created/updated:", tx.RowsAffected)
+						}
 					}
 					wg.Done()
 				}()

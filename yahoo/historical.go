@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/imroc/req"
 	"gorm.io/gorm"
+	"time"
 )
 
 func RequestHistorical(symbol, interval, rng string) (resp []*Historical, err error) {
@@ -60,13 +61,13 @@ type HistoricalResponse struct {
 
 type Historical struct {
 	gorm.Model
-	Symbol    string
-	Timestamp int64
-	High      float32
-	Low       float32
-	Volume    int
-	Close     float32
-	Open      float32
+	Symbol string    `gorm:"primaryKey"`
+	Date   time.Time `gorm:"primaryKey"`
+	High   float32
+	Low    float32
+	Volume int
+	Close  float32
+	Open   float32
 }
 
 var (
@@ -143,13 +144,13 @@ func (r *HistoricalResponse) To() (w []*Historical, err error) {
 
 	for i, t := range timestamps {
 		w = append(w, &Historical{
-			Symbol:    symbol,
-			Timestamp: t,
-			High:      highs[i],
-			Low:       lows[i],
-			Volume:    volumes[i],
-			Close:     closes[i],
-			Open:      opens[i],
+			Symbol: symbol,
+			Date:   time.Unix(t, 0),
+			High:   highs[i],
+			Low:    lows[i],
+			Volume: volumes[i],
+			Close:  closes[i],
+			Open:   opens[i],
 		})
 	}
 
