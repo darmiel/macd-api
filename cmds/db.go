@@ -55,7 +55,6 @@ func init() {
 			var (
 				historicals []*yahoo.Historical
 				hmu         sync.Mutex
-				wg          sync.WaitGroup
 				dbmu        sync.Mutex
 			)
 
@@ -64,51 +63,45 @@ func init() {
 			// start progressbar
 			bar := pb.Full.Start(len(ifa))
 			common.DistributedGoroutine(ifa, StgGroupSize, func(arr []interface{}) {
-				wg.Add(1)
-
-				go func() {
-					var historical []*yahoo.Historical
-					for _, a := range arr {
-						m, o := a.(nasdaq.SecurityModel)
-						if !o {
-							panic("o was no SecurityModel")
-						}
-
-						// request yahoo api
-						historical, err = yahoo.RequestHistorical(m.Symbol(), StgInterval, StgRange)
-						if err != nil {
-							msg := fmt.Sprintln(common.Error(), "Symbol", m.Symbol(), "invalid response:", err)
-							errarr = append(errarr, msg)
-							if len(errarr) > 30 {
-								// print if more than 30 errors
-								fmt.Print(msg)
-							}
-							continue
-						}
-
-						// pb, save historical values
-						bar.Increment()
-						hmu.Lock()
-						historicals = append(historicals, historical...)
-						hmu.Unlock()
-
-						if !StgDryRun {
-							// save to db
-							dbmu.Lock()
-							tx := db.Clauses(clause.OnConflict{
-								Columns:   []clause.Column{{Name: "symbol"}, {Name: "date"}},
-								UpdateAll: true,
-							}).CreateInBatches(historical, 1024)
-							if tx.Error != nil {
-								fmt.Println(common.Error(), "sql ::", tx.Error)
-							}
-							dbmu.Unlock()
-						}
+				var historical []*yahoo.Historical
+				for _, a := range arr {
+					m, o := a.(nasdaq.SecurityModel)
+					if !o {
+						panic("o was no SecurityModel")
 					}
-					wg.Done()
-				}()
+
+					// request yahoo api
+					historical, err = yahoo.RequestHistorical(m.Symbol(), StgInterval, StgRange)
+					if err != nil {
+						msg := fmt.Sprintln(common.Error(), "Symbol", m.Symbol(), "invalid response:", err)
+						errarr = append(errarr, msg)
+						if len(errarr) > 30 {
+							// print if more than 30 errors
+							fmt.Print(msg)
+						}
+						continue
+					}
+
+					// pb, save historical values
+					bar.Increment()
+					hmu.Lock()
+					historicals = append(historicals, historical...)
+					hmu.Unlock()
+
+					if !StgDryRun {
+						// save to db
+						dbmu.Lock()
+						tx := db.Clauses(clause.OnConflict{
+							Columns:   []clause.Column{{Name: "symbol"}, {Name: "date"}},
+							UpdateAll: true,
+						}).CreateInBatches(historical, 1024)
+						if tx.Error != nil {
+							fmt.Println(common.Error(), "sql ::", tx.Error)
+						}
+						dbmu.Unlock()
+					}
+				}
 			})
-			wg.Wait()
 
 			// end progressbar
 			bar.Finish()
