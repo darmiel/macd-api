@@ -5,11 +5,9 @@ WITH a AS (
     HAVING COUNT(symbol) >= 90
 )
 
-SELECT
-       *
+SELECT *
 FROM (
-         SELECT
-                ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.timestamp DESC) AS r,
+         SELECT ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.timestamp DESC) AS r,
                 h.symbol,
                 to_timestamp(h.timestamp) AS date,
                 h.high,

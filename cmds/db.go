@@ -22,6 +22,7 @@ func init() {
 				StgInterval  = ctx.String("interval")
 				StgMax       = ctx.Int("max")
 				StgGroupSize = ctx.Int("gsize")
+				StgDryRun    = ctx.Bool("dry-run")
 			)
 
 			// connecting to database
@@ -55,6 +56,7 @@ func init() {
 				historicals []*yahoo.Historical
 				hmu         sync.Mutex
 				wg          sync.WaitGroup
+				dbmu        sync.Mutex
 			)
 
 			var errarr []string
@@ -71,6 +73,8 @@ func init() {
 						if !o {
 							panic("o was no SecurityModel")
 						}
+
+						// request yahoo api
 						historical, err = yahoo.RequestHistorical(m.Symbol(), StgInterval, StgRange)
 						if err != nil {
 							msg := fmt.Sprintln(common.Error(), "Symbol", m.Symbol(), "invalid response:", err)
@@ -81,21 +85,24 @@ func init() {
 							}
 							continue
 						}
+
+						// pb, save historical values
 						bar.Increment()
 						hmu.Lock()
 						historicals = append(historicals, historical...)
 						hmu.Unlock()
 
-						// save to db
-						tx := db.Clauses(clause.OnConflict{
-							Columns:   []clause.Column{{Name: "symbol"}, {Name: "date"}},
-							UpdateAll: true,
-						}).CreateInBatches(historical, 100)
-						if tx.Error != nil {
-							fmt.Println(common.Error(), "sql ::", tx.Error)
-							fmt.Println(common.Error(), tx.Statement.SQL.String())
-						} else {
-							fmt.Println(common.Info(), "sql :: created/updated:", tx.RowsAffected)
+						if !StgDryRun {
+							// save to db
+							dbmu.Lock()
+							tx := db.Clauses(clause.OnConflict{
+								Columns:   []clause.Column{{Name: "symbol"}, {Name: "date"}},
+								UpdateAll: true,
+							}).CreateInBatches(historical, 1024)
+							if tx.Error != nil {
+								fmt.Println(common.Error(), "sql ::", tx.Error)
+							}
+							dbmu.Unlock()
 						}
 					}
 					wg.Done()
@@ -123,6 +130,7 @@ func init() {
 			&cli.StringFlag{Name: "interval", Value: "1d"},
 			&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
 			&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
+			&cli.BoolFlag{Name: "dry-run", Value: false},
 		},
 	})
 }
