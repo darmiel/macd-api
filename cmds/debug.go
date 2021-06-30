@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/darmiel/macd-api/common"
+	"github.com/darmiel/macd-api/pg"
 	"github.com/urfave/cli/v2"
 )
 
@@ -10,7 +10,7 @@ func init() {
 	App.Commands = append(App.Commands, &cli.Command{
 		Name: "debug",
 		Action: func(ctx *cli.Context) (err error) {
-			db := common.MustPostgres()
+			db := pg.MustPostgres(pg.FromCLI(ctx))
 			fmt.Println("fetching symbols ...")
 			data, err := db.FindHistoricalsWithMinData(90)
 			if err != nil {

@@ -11,9 +11,7 @@ RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
 COPY . .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o macd .
 
-# Output
-FROM postgres
+FROM alpine
 COPY --from=builder /usr/src/app/macd .
 
-ENV POSTGRES_PASSWORD 123456
-ENTRYPOINT ["postgres"]
+ENTRYPOINT ["/macd"]

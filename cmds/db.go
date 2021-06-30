@@ -5,6 +5,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/darmiel/macd-api/common"
 	"github.com/darmiel/macd-api/nasdaq"
+	"github.com/darmiel/macd-api/pg"
 	"github.com/darmiel/macd-api/yahoo"
 	"github.com/urfave/cli/v2"
 	"gorm.io/gorm/clause"
@@ -12,9 +13,19 @@ import (
 )
 
 func init() {
+	flags := []cli.Flag{
+		&cli.StringFlag{Name: "range", Value: "90d"},
+		&cli.StringFlag{Name: "interval", Value: "1d"},
+		&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
+		&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
+		&cli.BoolFlag{Name: "dry-run", Value: false},
+	}
+	flags = append(flags, pg.Flags()...) // add pg flags
+
 	App.Commands = append(App.Commands, &cli.Command{
 		Name:    "database",
 		Aliases: []string{"db"},
+		Flags:   flags,
 		Action: func(ctx *cli.Context) (err error) {
 			// settings
 			var (
@@ -27,7 +38,7 @@ func init() {
 
 			// connecting to database
 			fmt.Println(common.Info(), "Connecting to database ...")
-			db := common.MustPostgres()
+			db := pg.MustPostgres(pg.FromCLI(ctx))
 
 			fmt.Println(common.Info(), "Auto Migrate Table ...")
 			if err = db.AutoMigrate(&yahoo.Historical{}); err != nil {
@@ -117,13 +128,6 @@ func init() {
 
 			fmt.Println(common.Info(), "Loaded", len(historicals), "historical data")
 			return nil
-		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "range", Value: "90d"},
-			&cli.StringFlag{Name: "interval", Value: "1d"},
-			&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
-			&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
-			&cli.BoolFlag{Name: "dry-run", Value: false},
 		},
 	})
 }
