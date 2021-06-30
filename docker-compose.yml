@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  pg:
+    image: postgres
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: "123456"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - 45432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  macd:
+    build:
+      context: .
+      dockerfile: ./docker/build/Dockerfile
+    depends_on:
+      - pg
+    command: ["/macd", "db", "--pg-host", "pg", "--pg-pass", "123456", "--pg-port", "5432" ]
+    entrypoint: ["/wait-for-it.sh", "pg:45432", "--" ]

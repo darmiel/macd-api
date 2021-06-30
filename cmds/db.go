@@ -16,8 +16,8 @@ func init() {
 	flags := []cli.Flag{
 		&cli.StringFlag{Name: "range", Value: "90d"},
 		&cli.StringFlag{Name: "interval", Value: "1d"},
-		&cli.IntFlag{Name: "max", Value: 100, Usage: "Max models"},
-		&cli.IntFlag{Name: "gsize", Value: 10, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
+		&cli.IntFlag{Name: "max", Value: -1, Usage: "Max models"},
+		&cli.IntFlag{Name: "gsize", Value: 7, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
 		&cli.BoolFlag{Name: "dry-run", Value: false},
 	}
 	flags = append(flags, pg.Flags()...) // add pg flags
@@ -52,7 +52,7 @@ func init() {
 				return
 			}
 			_ = conn.Quit() // quit FTP connection
-			if len(models) > StgMax {
+			if StgMax > 0 && len(models) > StgMax {
 				fmt.Println(common.Info(), "Got", len(models), "models ( >", StgMax, "). Shrinking to", StgMax)
 				models = models[:StgMax]
 			}

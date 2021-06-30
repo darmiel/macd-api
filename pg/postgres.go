@@ -16,6 +16,7 @@ type Postgres struct {
 func Flags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{Name: "pg-dsn"},
+		&cli.StringFlag{Name: "pg-host"},
 		&cli.StringFlag{Name: "pg-user"},
 		&cli.StringFlag{Name: "pg-pass"},
 		&cli.StringFlag{Name: "pg-db"},
