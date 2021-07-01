@@ -1,19 +1,18 @@
-DELETE
-FROM historicals
-WHERE id IN (
-    SELECT id
-    FROM historicals c
-             INNER JOIN (
-        SELECT h.symbol,
-               h.date,
-               ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.date DESC) AS RowRank
-        FROM historicals h
-                 INNER JOIN (
-            SELECT symbol,
-                   to_char(date, 'YYYYMMDD') dt,
-                   COUNT(*) AS               CountOf
-            FROM historicals
-            GROUP BY symbol, dt
-            HAVING COUNT(*) > 1) dt ON h.symbol = dt.symbol) e ON c.symbol = e.symbol
-        AND c.date = e.date
-    WHERE e.RowRank != 1)
+WITH rank AS (
+    SELECT h.symbol,
+           h.date,
+           ROW_NUMBER() OVER (PARTITION BY h.symbol,
+			to_char(h.date,
+			'YYYYMMDD')
+			ORDER BY
+				h.date DESC) AS RowRank -- DESC: 18:29 -> 2; 18:32 -> 1
+    FROM historicals h
+)
+DELETE FROM historicals t
+WHERE t.id IN (
+    SELECT
+    h.id FROM historicals h
+    INNER JOIN rank ON rank.symbol = h.symbol
+  AND rank.date = h.date
+    WHERE
+    rank.RowRank != 1)
