@@ -33,6 +33,9 @@ if ! is_container_running "${PSQL_CONTAINER}"; then
       exit 2
     fi
   done
+
+  echo "Sleeping for 10 seconds ..."
+  sleep 10
 fi
 
 # build app
