@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"gorm.io/gorm/clause"
 	"sync"
+	"time"
 )
 
 func init() {
@@ -19,8 +20,8 @@ func init() {
 		&cli.IntFlag{Name: "max", Value: -1, Usage: "Max models"},
 		&cli.IntFlag{Name: "gsize", Value: 7, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
 		&cli.BoolFlag{Name: "dry-run", Value: false},
+		&cli.BoolFlag{Name: "no-today", Value: false},
 	}
-	flags = append(flags, pg.Flags()...) // add pg flags
 
 	App.Commands = append(App.Commands, &cli.Command{
 		Name:    "database",
@@ -34,6 +35,7 @@ func init() {
 				StgMax       = ctx.Int("max")
 				StgGroupSize = ctx.Int("gsize")
 				StgDryRun    = ctx.Bool("dry-run")
+				StgNoToday   = ctx.Bool("no-today")
 			)
 
 			// connecting to database
@@ -67,6 +69,7 @@ func init() {
 				historicals []*yahoo.Historical
 				hmu         sync.Mutex
 				dbmu        sync.Mutex
+				skipped     uint64
 			)
 
 			var errarr []string
@@ -91,6 +94,21 @@ func init() {
 							fmt.Print(msg)
 						}
 						continue
+					}
+
+					// remove from today
+					if StgNoToday {
+						const f = "02012006"
+						mor := time.Now().Format(f)
+						var c []*yahoo.Historical
+						for _, h := range historical {
+							if h.Date.Format(f) != mor {
+								c = append(c, h)
+							} else {
+								skipped++
+							}
+						}
+						historical = c
 					}
 
 					// pb, save historical values
@@ -126,7 +144,7 @@ func init() {
 				fmt.Println("---")
 			}
 
-			fmt.Println(common.Info(), "Loaded", len(historicals), "historical data")
+			fmt.Println(common.Info(), "Loaded", len(historicals), "historical data ( skipped", skipped, ")")
 			return nil
 		},
 	})

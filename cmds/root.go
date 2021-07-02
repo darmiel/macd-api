@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"github.com/darmiel/macd-api/pg"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,4 +16,5 @@ var App = &cli.App{
 			Email: "hi@d2a.io",
 		},
 	},
+	Flags: pg.Flags(),
 }
