@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
 PSQL_CONTAINER="macds-api-postgres-dev"
 OUT_CSV="current-90-day-$(date +%Y-%m-%d).csv"
 
-function is_container_running() {
+is_container_running() {
   if [ "$(docker container inspect -f '{{.State.Status}}' "$1" 2>/dev/null)" == "running" ]; then
     return 0
   else
@@ -13,7 +13,7 @@ function is_container_running() {
   fi
 }
 
-function sql_query() {
+sql_query() {
   docker exec "${PSQL_CONTAINER}" psql -d postgres -U postgres -c "$1"
 }
 
@@ -44,7 +44,7 @@ echo ""
 
 # fetch data
 echo "Fetching symbols & historical data ..."
-./macd db --gsize 6
+./macd db --gsize 20
 
 echo "Fetching new row count after fetch ..."
 sql_query "SELECT COUNT(*) FROM historicals"
