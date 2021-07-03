@@ -42,12 +42,21 @@ func (p *Postgres) FindHistoricalsWithMinData(num int) (res map[string][]*yahoo.
 	return
 }
 
-func (p *Postgres) GetHistoricalData(symbol string) (res []*yahoo.Historical, err error) {
+func (p *Postgres) GetHistoricalData(symbol string, days int) (res []*yahoo.Historical, err error) {
 	tx := p.Model(&yahoo.Historical{}).
 		Select("*").
 		Where("symbol = ?", symbol).
-		Order("date ASC").
+		Order("date DESC").
+		Limit(days).
 		Find(&res)
 	err = tx.Error
 	return
+}
+
+func (p *Postgres) GetHistorical90Data(symbol string) (res yahoo.Historical90, err error) {
+	var data []*yahoo.Historical
+	if data, err = p.GetHistoricalData(symbol, 90); err != nil {
+		return
+	}
+	return yahoo.Historical90From(data)
 }

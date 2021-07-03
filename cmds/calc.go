@@ -34,7 +34,7 @@ func init() {
 
 				// fetch historical data
 				fmt.Print(common.Info(), " Fetching symbol ", symbol, " ...")
-				data, err := db.GetHistoricalData(symbol)
+				data, err := db.GetHistorical90Data(symbol)
 				if err != nil {
 					fmt.Println("<->", common.Error(), err)
 					continue
@@ -48,18 +48,13 @@ func init() {
 					continue
 				}
 
-				// limit data
-				if len(data) > StgSampleSize {
-					data = data[len(data)-StgSampleSize:]
-				}
-
 				for _, day := range StgDays {
 					ema, err := calc.EMA(day, data)
 					if err != nil {
 						fmt.Println(common.Error(), "Failed to calculate for", day, "days:", err)
 						continue
 					}
-					fmt.Println(common.Info(), "EMA", day, "|", ema)
+					fmt.Println(common.Info(), "EMA", day, "|", ema.Seven(), "..", ema.Min(14), ema.Min(0))
 				}
 			}
 
