@@ -49,11 +49,7 @@ func init() {
 				}
 
 				for _, day := range StgDays {
-					ema, err := calc.EMA(day, data)
-					if err != nil {
-						fmt.Println(common.Error(), "Failed to calculate for", day, "days:", err)
-						continue
-					}
+					ema := calc.EMA(day, data)
 					fmt.Println(common.Info(), "EMA", day, "|", ema.Seven(), "..", ema.Min(14), ema.Min(0))
 				}
 			}
