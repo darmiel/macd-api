@@ -5,6 +5,28 @@ set -e
 PSQL_CONTAINER="macds-api-postgres-dev"
 OUT_CSV="current-90-day-$(date +%Y-%m-%d).csv"
 
+# ------------- #
+# O P T I O N S #
+# ------------- #
+SKIP_SYMBOL_FETCH=false
+SKIP_HISTORIC_FETCH=false
+SKIP_DUPE_CHECK=false
+
+while [ "$1" != "" ]; do
+  case $1 in
+  --skip-symbol)
+    SKIP_SYMBOL_FETCH=true
+    ;;
+  --skip-historic)
+    SKIP_HISTORIC_FETCH=true
+    ;;
+  --skip-dupe)
+    SKIP_DUPE_CHECK=true
+    ;;
+  esac
+  shift
+done
+
 is_container_running() {
   if [ "$(docker container inspect -f '{{.State.Status}}' "$1" 2>/dev/null)" == "running" ]; then
     return 0
@@ -46,41 +68,63 @@ fi
 # --------- #
 go build -o macd .
 
-echo -n "Fetching current row count ... "
-NUM_HISTORIC=$(raw_sql_query "SELECT COUNT(*) FROM historicals")
-echo "${NUM_HISTORIC}"
+echo -n "[📚] Fetching current row count: "
+raw_sql_query "SELECT COUNT(*) FROM historicals"
 
 # --------- #
 # F E T C H #
 # --------- #
 
 # Fetch Symbols
-echo -n "Loading symbol count ... "
+echo -n "[🏷] Loading symbol count: "
 NUM_SYMBOLS=$(raw_sql_query "SELECT COUNT(*) FROM symbols")
 echo "${NUM_SYMBOLS}"
 
 # Fetch new symbols?
 if [ "${NUM_SYMBOLS}" -le "0" ]; then
-  echo "  -> No symbols found. Fetching ..."
-  ./macd fetch symbols --save
+  if [ ${SKIP_SYMBOL_FETCH} == false ]; then
+    echo "     -> No symbols found. Fetching ..."
+    ./macd fetch symbols --save
+  else
+    echo "     -> Skipped fetching symbols!"
+  fi
 fi
 
 # ---
 
 # Fetch historical data
-echo "Fetching historical data ..."
-./macd fetch historical --save --gsize 20
+if [ ${SKIP_HISTORIC_FETCH} == false ]; then
+  echo "[💡] Fetching historical data ..."
+  ./macd fetch historical --save --gsize 20
+else
+  echo "[💡] Skipped fetching historical data!"
+fi
 
-echo "Fetching new row count after fetch ... "
+# ---
+
+echo -e "[📚] Fetching new row count after fetch ... "
 raw_sql_query "SELECT COUNT(*) FROM historicals"
 
-# TODO: delete-duplicates.sql is deprecated
-# echo "Deleting duplicates ..."
-# sql_query "$(cat delete-duplicates.sql)"
-# echo "Fetching new row count after dup-deletion ..."
-# sql_query "SELECT COUNT(*) FROM historicals"
+# ------- #
+# D U P E #
+# ------- #
 
-echo "Writing to csv ..."
+if [ ${SKIP_DUPE_CHECK} == false ]; then
+  echo "[🗑] Deleting Duplicates. (CURRENTLY DEPRECATED. DOES NOT DO ANYTHING!)" # TODO
+  echo -n "  [🗑] Before: "
+  raw_sql_query "SELECT COUNT(*) FROM historicals"
+
+  # sql_query "$(cat delete-duplicates.sql)"
+
+  echo -n "  [🗑] After: "
+  raw_sql_query "SELECT COUNT(*) FROM historicals"
+fi
+
+# ----------- #
+# E X P O R T #
+# ----------- #
+
+echo "[📖] Writing to csv ..."
 docker exec "${PSQL_CONTAINER}" psql -d postgres -U postgres -c \
   "COPY ($(cat 90-day-historical.sql)) TO STDOUT WITH CSV HEADER DELIMITER E'\t'" |
   tr '.' ',' >"${OUT_CSV}"
