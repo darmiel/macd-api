@@ -1,19 +1,31 @@
 package yahoo
 
 import (
+	"errors"
 	"fmt"
+	"github.com/darmiel/macd-api/common"
+	"github.com/darmiel/macd-api/models"
 	"github.com/imroc/req"
 	"sort"
 	"time"
 )
 
-func Historical90From(data []*Historical) (res Historical90, err error) {
+var (
+	ErrInvalidResponse = errors.New("invalid response")
+	ErrHighEmpty       = errors.New("highs empty")
+	ErrLowEmpty        = errors.New("lows empty")
+	ErrVolumeEmpty     = errors.New("volumes empty")
+	ErrCloseEmpty      = errors.New("closes empty")
+	ErrOpenEmpty       = errors.New("opens empty")
+)
+
+func Historical90From(data []*models.Historical) (res models.Historical90, err error) {
 	if len(data) < 90 {
-		return Historical90{}, fmt.Errorf("required 90 records but %d provided", len(data))
+		return models.Historical90{}, fmt.Errorf("required 90 records but %d provided", len(data))
 	}
 	r := data[:] // copy data
 	sort.Slice(r, func(i, j int) bool {
-		return r[i].Date.Before(r[j].Date)
+		return r[i].DayDate.Before(r[j].DayDate)
 	})
 	if len(r) > 90 {
 		r = r[len(r)-90:]
@@ -25,7 +37,7 @@ func Historical90From(data []*Historical) (res Historical90, err error) {
 	return
 }
 
-func RequestHistorical(symbol, interval, rng string) (resp []*Historical, err error) {
+func RequestHistorical(symbol, interval, rng string) (resp []*models.Historical, err error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?formatted=true&interval=%s&range=%s",
 		symbol, interval, rng)
 
@@ -76,12 +88,12 @@ type historicalResponse struct {
 	} `json:"chart"`
 }
 
-func (r *historicalResponse) To() (w []*Historical, err error) {
-	if r.Chart.Result == nil {
+func (inp *historicalResponse) To() (out []*models.Historical, err error) {
+	if inp.Chart.Result == nil {
 		return nil, ErrInvalidResponse
 	}
-	if r.Chart.Error != nil {
-		return nil, fmt.Errorf("%v", r.Chart.Error)
+	if inp.Chart.Error != nil {
+		return nil, fmt.Errorf("%v", inp.Chart.Error)
 	}
 
 	var (
@@ -95,29 +107,29 @@ func (r *historicalResponse) To() (w []*Historical, err error) {
 	)
 
 	//
-	for _, res := range r.Chart.Result {
+	for _, res := range inp.Chart.Result {
 		if res.Meta.Symbol != "" {
 			symbol = res.Meta.Symbol
 		}
 		if res.Timestamp != nil {
 			timestamps = res.Timestamp
 		}
-		if q := res.Indicators.Quote; q != nil {
-			for _, qu := range q {
-				if qu.Close != nil {
-					closes = qu.Close
+		if quotes := res.Indicators.Quote; quotes != nil {
+			for _, qv := range quotes {
+				if qv.Close != nil {
+					closes = qv.Close
 				}
-				if qu.High != nil {
-					highs = qu.High
+				if qv.High != nil {
+					highs = qv.High
 				}
-				if qu.Low != nil {
-					lows = qu.Low
+				if qv.Low != nil {
+					lows = qv.Low
 				}
-				if qu.Open != nil {
-					opens = qu.Open
+				if qv.Open != nil {
+					opens = qv.Open
 				}
-				if qu.Volume != nil {
-					volumes = qu.Volume
+				if qv.Volume != nil {
+					volumes = qv.Volume
 				}
 			}
 		}
@@ -140,14 +152,17 @@ func (r *historicalResponse) To() (w []*Historical, err error) {
 	}
 
 	for i, t := range timestamps {
-		w = append(w, &Historical{
-			Symbol: symbol,
-			Date:   time.Unix(t, 0),
-			High:   highs[i],
-			Low:    lows[i],
-			Volume: volumes[i],
-			Close:  closes[i],
-			Open:   opens[i],
+		high := highs[i]
+		origT := time.Unix(t, 0)
+		out = append(out, &models.Historical{
+			Symbol:   symbol,
+			DayDate:  common.NormalizeTimeNoon(origT),
+			OrigDate: origT,
+			High:     high,
+			Low:      lows[i],
+			Volume:   volumes[i],
+			Close:    closes[i],
+			Open:     opens[i],
 		})
 	}
 

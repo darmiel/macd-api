@@ -1,7 +1,7 @@
 package calc
 
 import (
-	"github.com/darmiel/macd-api/yahoo"
+	"github.com/darmiel/macd-api/models"
 )
 
 type T []float64
@@ -28,7 +28,7 @@ func (t T) Seven() (res [8]float64) {
 
 // requires data to be ordered by date ASC
 // and min len of ({day} + 1)
-func EMA(day int, data yahoo.Historical90) (res T) {
+func EMA(day int, data models.Historical90) (res T) {
 	alpha := 2.0 / (float64(day) + 1.0)
 	ema := float64(data[0].Close)
 	res = append(res, ema)
@@ -39,7 +39,7 @@ func EMA(day int, data yahoo.Historical90) (res T) {
 	return
 }
 
-func MACD(data yahoo.Historical90) (res T) {
+func MACD(data models.Historical90) (res T) {
 	ema10 := EMA(10, data)
 	ema35 := EMA(35, data)
 	for i := 0; i < len(data); i++ {

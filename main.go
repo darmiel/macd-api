@@ -29,7 +29,7 @@ func main() {
 			panic(err)
 		}
 		fmt.Println("Auto migrating ...")
-		if err = db.AutoMigrate(&yahoo.Historical{}); err != nil {
+		if err = db.AutoMigrate(&models.Historical{}); err != nil {
 			panic(err)
 		}
 
@@ -64,7 +64,7 @@ func main() {
 					continue
 				}
 
-				var hist []*yahoo.Historical
+				var hist []*models.Historical
 				if hist, err = yahoo.RequestHistorical(s.Symbol, "1d", "90d"); err != nil {
 					fmt.Println(s.Symbol, w, "ERROR ::", err)
 					continue

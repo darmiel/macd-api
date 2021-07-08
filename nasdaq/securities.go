@@ -1,6 +1,7 @@
 package nasdaq
 
 import (
+	"github.com/darmiel/macd-api/models"
 	"regexp"
 )
 
@@ -11,6 +12,15 @@ type SecurityModel interface {
 	SecurityName() string
 	IsETF() bool
 	Exchange() string
+}
+
+func ToSymbolModel(m SecurityModel) *models.Symbol {
+	return &models.Symbol{
+		Symbol:   m.Symbol(),
+		Name:     m.SecurityName(),
+		ETF:      m.IsETF(),
+		Exchange: m.Exchange(),
+	}
 }
 
 func IsSymbolValid(m SecurityModel) bool {

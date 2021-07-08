@@ -2,7 +2,8 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/darmiel/macd-api/pg"
+	"github.com/darmiel/macd-api/models"
+	"github.com/darmiel/macd-api/yahoo"
 	"github.com/urfave/cli/v2"
 )
 
@@ -10,24 +11,15 @@ func init() {
 	App.Commands = append(App.Commands, &cli.Command{
 		Name: "debug",
 		Action: func(ctx *cli.Context) (err error) {
-			db := pg.MustPostgres(pg.FromCLI(ctx))
-			fmt.Println("fetching symbols ...")
-			data, err := db.FindHistoricalsWithMinData(90)
-			if err != nil {
-				panic(err)
+			var h []*models.Historical
+			if h, err = yahoo.RequestHistorical("ABST", "1d", "90d"); err != nil {
+				return
 			}
-			fmt.Println("DATA:")
-			fmt.Println()
-			for k, v := range data {
-				fmt.Println(k, "::")
-				for _, a := range v {
-					fmt.Printf("%+v | ", a)
-				}
-				fmt.Println()
-				fmt.Println("  -> len:", len(v))
-				fmt.Println()
+			for _, v := range h {
+				fmt.Printf("%30s | H %8e | L %8e | C %8e | O %8e | V %8d\n",
+					v.DayDate, v.High, v.Low, v.Close, v.Open, v.Volume)
 			}
-			fmt.Println("len:", len(data))
+			fmt.Println(len(h), "records.")
 			return
 		},
 		Flags: []cli.Flag{},
