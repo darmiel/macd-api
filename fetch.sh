@@ -17,8 +17,11 @@ sql_query() {
   docker exec "${PSQL_CONTAINER}" psql -d postgres -U postgres -c "$1"
 }
 
+raw_sql_query() {
+  docker exec "${PSQL_CONTAINER}" psql -d postgres -U postgres --quiet --csv -c "$1" | sed -n 2p
+}
 
-# Fire up postgresql docker
+# Fire up postgresql docker and wait
 if ! is_container_running "${PSQL_CONTAINER}"; then
   echo "Postgres is not running. Starting ..."
   bash ./dev_postgres.sh
@@ -27,41 +30,60 @@ if ! is_container_running "${PSQL_CONTAINER}"; then
   while ! is_container_running "${PSQL_CONTAINER}"; do
     sleep 1
     echo "Waiting for container to start ..."
-    TRIES=$((TRIES+1))
+    TRIES=$((TRIES + 1))
     if [ $TRIES -gt 15 ]; then
       echo "Postgres wouldn't start"
       exit 2
     fi
   done
 
-  echo "Sleeping for 10 seconds ..."
-  sleep 10
+  echo "Sleeping for 15 seconds ..."
+  sleep 15
 fi
 
-# build app
+# --------- #
+# B U I L D #
+# --------- #
 go build -o macd .
 
-echo "Fetching current row count ..."
-sql_query "SELECT COUNT(*) FROM historicals"
-echo ""
+echo -n "Fetching current row count ... "
+NUM_HISTORIC=$(raw_sql_query "SELECT COUNT(*) FROM historicals")
+echo "${NUM_HISTORIC}"
 
-# fetch data
-echo "Fetching symbols & historical data ..."
-./macd db --gsize 20
+# --------- #
+# F E T C H #
+# --------- #
 
-echo "Fetching new row count after fetch ..."
-sql_query "SELECT COUNT(*) FROM historicals"
+# Fetch Symbols
+echo -n "Loading symbol count ... "
+NUM_SYMBOLS=$(raw_sql_query "SELECT COUNT(*) FROM symbols")
+echo "${NUM_SYMBOLS}"
 
-echo "Deleting duplicates ..."
-sql_query "$(cat delete-duplicates.sql)"
+# Fetch new symbols?
+if [ "${NUM_SYMBOLS}" -le "0" ]; then
+  echo "  -> No symbols found. Fetching ..."
+  ./macd fetch symbols --save
+fi
 
-echo "Fetching new row count after dup-deletion ..."
-sql_query "SELECT COUNT(*) FROM historicals"
+# ---
+
+# Fetch historical data
+echo "Fetching historical data ..."
+./macd fetch historical --save --gsize 20
+
+echo "Fetching new row count after fetch ... "
+raw_sql_query "SELECT COUNT(*) FROM historicals"
+
+# TODO: delete-duplicates.sql is deprecated
+# echo "Deleting duplicates ..."
+# sql_query "$(cat delete-duplicates.sql)"
+# echo "Fetching new row count after dup-deletion ..."
+# sql_query "SELECT COUNT(*) FROM historicals"
 
 echo "Writing to csv ..."
 docker exec "${PSQL_CONTAINER}" psql -d postgres -U postgres -c \
-    "COPY ($(cat 90-day-historical.sql)) TO STDOUT WITH CSV HEADER DELIMITER E'\t'" | tr '.' ',' > \
-    "${OUT_CSV}"
+  "COPY ($(cat 90-day-historical.sql)) TO STDOUT WITH CSV HEADER DELIMITER E'\t'" |
+  tr '.' ',' >"${OUT_CSV}"
 
 # overwrite main csv
-cat "${OUT_CSV}" > current-90-day.csv
+cat "${OUT_CSV}" >current-90-day.csv

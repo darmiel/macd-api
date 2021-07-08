@@ -6,9 +6,10 @@ WITH a AS (
 )
 SELECT *
 FROM (
-         SELECT ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.date DESC) AS r,
+         SELECT ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.day_date DESC) AS r,
                 h.symbol,
-                h.date,
+                h.day_date,
+                h.orig_date,
                 h.high,
                 h.low,
                 h.open,

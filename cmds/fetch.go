@@ -73,7 +73,7 @@ func init() {
 					&cli.StringFlag{Name: "interval", Value: "1d"},
 					&cli.IntFlag{Name: "max", Value: -1, Usage: "Max models"},
 					&cli.IntFlag{Name: "gsize", Value: 7, Usage: "Group Size (The lower, the more threads: len(stocks) / gsize)"},
-					&cli.BoolFlag{Name: "dry-run", Value: false},
+					&cli.BoolFlag{Name: "save", Value: true},
 					&cli.BoolFlag{Name: "no-today", Value: false},
 				},
 				Action: func(ctx *cli.Context) (err error) {
@@ -83,7 +83,7 @@ func init() {
 						StgInterval  = ctx.String("interval")
 						StgMax       = ctx.Int("max")
 						StgGroupSize = ctx.Int("gsize")
-						StgDryRun    = ctx.Bool("dry-run")
+						StgSave      = ctx.Bool("save")
 						StgNoToday   = ctx.Bool("no-today")
 					)
 
@@ -153,7 +153,7 @@ func init() {
 
 							num.Add(int64(len(historical)))
 
-							if !StgDryRun {
+							if StgSave {
 								// save to db
 								dbmu.Lock()
 								tx := db.Clauses(clause.OnConflict{
