@@ -110,11 +110,11 @@ raw_sql_query "SELECT COUNT(*) FROM historicals"
 # ------- #
 
 if [ ${SKIP_DUPE_CHECK} == false ]; then
-  echo "[🗑] Deleting Duplicates. (CURRENTLY DEPRECATED. DOES NOT DO ANYTHING!)" # TODO
+  echo "[🗑] Deleting Duplicates (shouldn't do anything)."
   echo -n "  [🗑] Before: "
   raw_sql_query "SELECT COUNT(*) FROM historicals"
 
-  # sql_query "$(cat delete-duplicates.sql)"
+  sql_query "$(cat delete-duplicates.sql)" > /dev/null
 
   echo -n "  [🗑] After: "
   raw_sql_query "SELECT COUNT(*) FROM historicals"
