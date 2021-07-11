@@ -19,9 +19,9 @@ var (
 	ErrOpenEmpty       = errors.New("opens empty")
 )
 
-func Historical90From(data []*model.Historical) (res model.Historical90, err error) {
+func Historical90From(data []*model.Historic) (res model.Quarter, err error) {
 	if len(data) < 90 {
-		return model.Historical90{}, fmt.Errorf("required 90 records but %d provided", len(data))
+		return model.Quarter{}, fmt.Errorf("required 90 records but %d provided", len(data))
 	}
 	r := data[:] // copy data
 	sort.Slice(r, func(i, j int) bool {
@@ -37,18 +37,28 @@ func Historical90From(data []*model.Historical) (res model.Historical90, err err
 	return
 }
 
-func RequestHistorical(symbol, interval, rng string) (resp []*model.Historical, err error) {
+func RequestHistorical(symbol, interval, rng string) (resp []*model.Historic, err error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?formatted=true&interval=%s&range=%s",
 		symbol, interval, rng)
 
 	var http *req.Resp
-	if http, err = req.Get(url); err != nil {
-		if http != nil {
-			fmt.Println("WARN :: Invalid response:", http.String())
-		} else {
-			fmt.Println("WARN :: Invalid response ¯\\_(ツ)_/¯")
+
+	// try GET request 3 times
+	for i := 0; i < 3; i++ {
+		if http, err = req.Get(url); err != nil {
+			if http != nil {
+				fmt.Println("WARN :: Invalid response:", http.String(), "| try", i+1)
+			} else {
+				fmt.Println("WARN :: Invalid response ¯\\_(ツ)_/¯ | try", i+1)
+			}
+			// sleep for 1 sec
+			time.Sleep(time.Second)
+			continue
 		}
-		return
+		break
+	}
+	if http == nil {
+		return nil, errors.New("`http` was empty")
 	}
 
 	hr := new(historicalResponse)
@@ -88,7 +98,7 @@ type historicalResponse struct {
 	} `json:"chart"`
 }
 
-func (inp *historicalResponse) To() (out []*model.Historical, err error) {
+func (inp *historicalResponse) To() (out []*model.Historic, err error) {
 	if inp.Chart.Result == nil {
 		return nil, ErrInvalidResponse
 	}
@@ -154,7 +164,7 @@ func (inp *historicalResponse) To() (out []*model.Historical, err error) {
 	for i, t := range timestamps {
 		high := highs[i]
 		origT := time.Unix(t, 0)
-		out = append(out, &model.Historical{
+		out = append(out, &model.Historic{
 			Symbol:   symbol,
 			DayDate:  common.NormalizeTimeNoon(origT),
 			OrigDate: origT,

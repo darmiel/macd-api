@@ -4,9 +4,9 @@ import (
 	"time"
 )
 
-type Historical90 [90]*Historical
+type Quarter [90]*Historic
 
-type Historical struct {
+type Historic struct {
 	Symbol      string    `gorm:"primaryKey"`
 	DayDate     time.Time `gorm:"primaryKey"`
 	OrigDate    time.Time

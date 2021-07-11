@@ -35,7 +35,7 @@ var cmdFetchHistoric = &cli.Command{
 
 		// Database
 		db := pg.MustPostgres(pg.FromCLI(ctx))
-		if err = db.AutoMigrate(&model.Historical{}); err != nil {
+		if err = db.AutoMigrate(&model.Historic{}); err != nil {
 			panic(err)
 		}
 
@@ -63,7 +63,7 @@ var cmdFetchHistoric = &cli.Command{
 		// start progressbar
 		bar := pb.Full.Start(len(sbl))
 		common.DistributedGoroutine(model.ConvertToGenericArray(sbl), StgGroupSize, func(arr []interface{}) {
-			var historical []*model.Historical
+			var historical []*model.Historic
 			for _, a := range arr {
 				m, o := a.(*model.Symbol)
 				if !o {
@@ -86,7 +86,7 @@ var cmdFetchHistoric = &cli.Command{
 
 				// remove from today
 				if StgNoToday {
-					var c []*model.Historical
+					var c []*model.Historic
 					for _, h := range historical {
 						if common.IsToday(h.DayDate) {
 							skipped++

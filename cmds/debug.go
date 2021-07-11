@@ -11,7 +11,7 @@ func init() {
 	App.Commands = append(App.Commands, &cli.Command{
 		Name: "debug",
 		Action: func(ctx *cli.Context) (err error) {
-			var h []*model.Historical
+			var h []*model.Historic
 			if h, err = yahoo.RequestHistorical("ABST", "1d", "90d"); err != nil {
 				return
 			}
