@@ -59,8 +59,8 @@ if ! is_container_running "${PSQL_CONTAINER}"; then
     fi
   done
 
-  echo "Sleeping for 15 seconds ..."
-  sleep 15
+  echo "Sleeping for 30 seconds ..."
+  sleep 30
 fi
 
 # --------- #

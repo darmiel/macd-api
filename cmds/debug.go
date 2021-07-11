@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/darmiel/macd-api/models"
+	"github.com/darmiel/macd-api/model"
 	"github.com/darmiel/macd-api/yahoo"
 	"github.com/urfave/cli/v2"
 )
@@ -11,7 +11,7 @@ func init() {
 	App.Commands = append(App.Commands, &cli.Command{
 		Name: "debug",
 		Action: func(ctx *cli.Context) (err error) {
-			var h []*models.Historical
+			var h []*model.Historical
 			if h, err = yahoo.RequestHistorical("ABST", "1d", "90d"); err != nil {
 				return
 			}

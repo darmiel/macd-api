@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/darmiel/macd-api/common"
-	"github.com/darmiel/macd-api/models"
+	"github.com/darmiel/macd-api/model"
 	"github.com/imroc/req"
 	"sort"
 	"time"
@@ -19,9 +19,9 @@ var (
 	ErrOpenEmpty       = errors.New("opens empty")
 )
 
-func Historical90From(data []*models.Historical) (res models.Historical90, err error) {
+func Historical90From(data []*model.Historical) (res model.Historical90, err error) {
 	if len(data) < 90 {
-		return models.Historical90{}, fmt.Errorf("required 90 records but %d provided", len(data))
+		return model.Historical90{}, fmt.Errorf("required 90 records but %d provided", len(data))
 	}
 	r := data[:] // copy data
 	sort.Slice(r, func(i, j int) bool {
@@ -37,7 +37,7 @@ func Historical90From(data []*models.Historical) (res models.Historical90, err e
 	return
 }
 
-func RequestHistorical(symbol, interval, rng string) (resp []*models.Historical, err error) {
+func RequestHistorical(symbol, interval, rng string) (resp []*model.Historical, err error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?formatted=true&interval=%s&range=%s",
 		symbol, interval, rng)
 
@@ -88,7 +88,7 @@ type historicalResponse struct {
 	} `json:"chart"`
 }
 
-func (inp *historicalResponse) To() (out []*models.Historical, err error) {
+func (inp *historicalResponse) To() (out []*model.Historical, err error) {
 	if inp.Chart.Result == nil {
 		return nil, ErrInvalidResponse
 	}
@@ -154,7 +154,7 @@ func (inp *historicalResponse) To() (out []*models.Historical, err error) {
 	for i, t := range timestamps {
 		high := highs[i]
 		origT := time.Unix(t, 0)
-		out = append(out, &models.Historical{
+		out = append(out, &model.Historical{
 			Symbol:   symbol,
 			DayDate:  common.NormalizeTimeNoon(origT),
 			OrigDate: origT,

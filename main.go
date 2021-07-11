@@ -11,7 +11,7 @@ func main() {
 	}
 
 	/*
-		sec2, err2 := nasdaq.FetchOther()
+		sec2, err2 := security.FetchOther()
 		for _, s := range sec2 {
 			fmt.Println(*s)
 		}
@@ -29,13 +29,13 @@ func main() {
 			panic(err)
 		}
 		fmt.Println("Auto migrating ...")
-		if err = db.AutoMigrate(&models.Historical{}); err != nil {
+		if err = db.AutoMigrate(&model.Historical{}); err != nil {
 			panic(err)
 		}
 
 		fmt.Println("Fetching securities ...")
-		var sec []*nasdaq.NASDAQSecurity
-		if sec, err = nasdaq.FetchNASDAQ(); err != nil {
+		var sec []*security.NASDAQSecurity
+		if sec, err = security.FetchNASDAQ(); err != nil {
 			panic(err)
 		}
 
@@ -56,7 +56,7 @@ func main() {
 			mu.Unlock()
 
 			for _, d := range i {
-				s, o := d.(*nasdaq.NASDAQSecurity)
+				s, o := d.(*security.NASDAQSecurity)
 				if !o {
 					continue
 				}
@@ -64,7 +64,7 @@ func main() {
 					continue
 				}
 
-				var hist []*models.Historical
+				var hist []*model.Historical
 				if hist, err = yahoo.RequestHistorical(s.Symbol, "1d", "90d"); err != nil {
 					fmt.Println(s.Symbol, w, "ERROR ::", err)
 					continue
