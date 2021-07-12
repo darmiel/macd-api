@@ -30,11 +30,11 @@ var cmdFetchSymbols = &cli.Command{
 		// Fetch
 		fmt.Println(common.Info(), "Fetching ...")
 		var all []*model.Symbol
-		if all, err = security.FetchAllValid(); err != nil {
+		if all, err = security.FetchAll(); err != nil {
 			return
 		}
 
-		fmt.Println(common.Info(), "Fetched", len(all), "[valid] symbols")
+		fmt.Println(common.Info(), "Fetched", len(all), "symbols")
 
 		// Save to database
 		if StgSave {

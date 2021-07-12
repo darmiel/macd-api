@@ -95,7 +95,7 @@ fi
 # Fetch historical data
 if [ ${SKIP_HISTORIC_FETCH} == false ]; then
   echo "[💡] Fetching historical data ..."
-  ./macd fetch historical --save --gsize 20
+  ./macd fetch historic --save --gsize 20
 else
   echo "[💡] Skipped fetching historical data!"
 fi

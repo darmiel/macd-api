@@ -2,7 +2,7 @@ package security
 
 import "github.com/darmiel/macd-api/model"
 
-var Accepted = []string{"NASDAQ", NYSE}
+var Accepted = []string{NASDAQ, NYSE}
 
 ////////////////////////////////////////////////////
 

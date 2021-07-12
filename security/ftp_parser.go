@@ -72,6 +72,10 @@ func FetchAll() (out []*model.Symbol, err error) {
 		index++
 	}
 
+	for _, o := range out {
+		o.Use = o.IsAccepted(Accepted...)
+	}
+
 	return
 }
 
@@ -187,4 +191,8 @@ const (
 	NYSEARCA = "P"
 	BATS     = "Z"
 	IEXG     = "V"
+)
+
+const (
+	NASDAQ = "NASDAQ"
 )
