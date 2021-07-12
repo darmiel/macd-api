@@ -1,10 +1,10 @@
 WITH a AS (
     SELECT symbol
-    FROM historicals
+    FROM historics
     GROUP BY symbol
     HAVING COUNT(symbol) >= 90
 )
-SELECT *
+SELECT x.* -- , s.use
 FROM (
          SELECT ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.day_date DESC) AS r,
                 h.symbol,
@@ -15,7 +15,9 @@ FROM (
                 h.open,
                 h.close,
                 h.volume
-         FROM historicals h
+         FROM historics h
                   INNER JOIN a
                              ON a.symbol = h.symbol) x
+         INNER JOIN symbols s ON s.symbol = x.symbol
 WHERE x.r <= 90
+  AND s.use = TRUE

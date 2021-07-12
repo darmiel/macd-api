@@ -41,7 +41,7 @@ var cmdFetchSymbols = &cli.Command{
 			fmt.Println(common.Info(), "Saving to db ...")
 			tx := db.Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "symbol"}},
-				UpdateAll: true,
+				DoUpdates: clause.AssignmentColumns([]string{"name", "etf", "exchange"}),
 			}).CreateInBatches(all, 1024)
 			if tx.Error != nil {
 				fmt.Println(common.Error(), tx.Error)

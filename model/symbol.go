@@ -13,7 +13,7 @@ type Symbol struct {
 	Name     string
 	ETF      bool
 	Exchange string
-	Use      bool `gorm:"->"`
+	Use      bool `gorm:"<-:create"`
 }
 
 type SymbolParser interface {
