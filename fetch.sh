@@ -69,7 +69,7 @@ fi
 go build -o macd .
 
 echo -n "[📚] Fetching current row count: "
-raw_sql_query "SELECT COUNT(*) FROM historicals"
+raw_sql_query "SELECT COUNT(*) FROM historics"
 
 # --------- #
 # F E T C H #
@@ -103,7 +103,7 @@ fi
 # ---
 
 echo -e "[📚] Fetching new row count after fetch ... "
-raw_sql_query "SELECT COUNT(*) FROM historicals"
+raw_sql_query "SELECT COUNT(*) FROM historics"
 
 # ------- #
 # D U P E #
@@ -112,12 +112,12 @@ raw_sql_query "SELECT COUNT(*) FROM historicals"
 if [ ${SKIP_DUPE_CHECK} == false ]; then
   echo "[🗑] Deleting Duplicates (shouldn't do anything)."
   echo -n "  [🗑] Before: "
-  raw_sql_query "SELECT COUNT(*) FROM historicals"
+  raw_sql_query "SELECT COUNT(*) FROM historics"
 
   sql_query "$(cat delete-duplicates.sql)" > /dev/null
 
   echo -n "  [🗑] After: "
-  raw_sql_query "SELECT COUNT(*) FROM historicals"
+  raw_sql_query "SELECT COUNT(*) FROM historics"
 fi
 
 # ----------- #

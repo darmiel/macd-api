@@ -6,11 +6,11 @@ WITH rank AS (
                        'YYYYMMDD')
                ORDER BY
                    h.day_date DESC) AS RowRank -- DESC: 18:29 -> 2; 18:32 -> 1
-    FROM historicals h
+    FROM historics h
 )
 
 DELETE
-FROM historicals HIST
+FROM historics HIST
     USING rank RA
 WHERE HIST.symbol = RA.symbol
   AND HIST.day_date = RA.day_date
