@@ -4,7 +4,7 @@ WITH a AS (
     GROUP BY symbol
     HAVING COUNT(symbol) >= 90
 )
-SELECT x.* -- , s.use
+SELECT x.*
 FROM (
          SELECT ROW_NUMBER() OVER (PARTITION BY h.symbol ORDER BY h.day_date DESC) AS r,
                 h.symbol,

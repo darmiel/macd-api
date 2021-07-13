@@ -49,7 +49,7 @@ func (p *Postgres) GetHistoricalData(symbol string, days int) (res []*model.Hist
 	tx := p.Model(&model.Historic{}).
 		Select("*").
 		Where("symbol = ?", symbol).
-		Order("date DESC").
+		Order("day_date DESC").
 		Limit(days).
 		Find(&res)
 	err = tx.Error
