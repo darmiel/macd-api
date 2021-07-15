@@ -11,6 +11,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -71,10 +72,10 @@ func init() {
 				cd[i+2] = append(cd[i+2], c.Symbol)
 				cd[i+2] = append(cd[i+2], quarter[89].DayDate.Format("02.01.2006"))
 				for _, x := range calc.EMA(10, quarter).Seven() {
-					cd[i+2] = append(cd[i+2], strconv.FormatFloat(x, 'f', 10, 64))
+					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
 				for _, x := range calc.EMA(35, quarter).Seven() {
-					cd[i+2] = append(cd[i+2], strconv.FormatFloat(x, 'f', 10, 64))
+					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
 			}
 			bar.Finish()
@@ -94,4 +95,8 @@ func init() {
 			&cli.IntSliceFlag{Name: "days", Value: cli.NewIntSlice(10, 20, 35)},
 		},
 	})
+}
+
+func formatFloat(f float64, sep string) string {
+	return strings.ReplaceAll(strconv.FormatFloat(f, 'f', 10, 64), ".", sep)
 }
