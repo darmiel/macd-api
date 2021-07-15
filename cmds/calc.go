@@ -47,10 +47,10 @@ func init() {
 			defer csvFile.Close()
 
 			bar := pb.Full.Start(len(symbolCounts))
-			cd := make([][]string, len(symbolCounts)+1)
+			cd := make([][]string, len(symbolCounts)+2)
 
 			/// HEADER
-			cd[0] = []string{"Symbol"}
+			cd[0] = []string{"Symbol", "Date"}
 			for i := 0; i < 8; i++ {
 				cd[0] = append(cd[0], "EMA10T"+strconv.Itoa(i))
 			}
@@ -68,12 +68,13 @@ func init() {
 					continue
 				}
 
-				cd[i+1] = append(cd[i+1], c.Symbol)
+				cd[i+2] = append(cd[i+2], c.Symbol)
+				cd[i+2] = append(cd[i+2], quarter[89].DayDate.Format("02.01.2006"))
 				for _, x := range calc.EMA(10, quarter).Seven() {
-					cd[i+1] = append(cd[i+1], strconv.FormatFloat(x, 'f', 10, 64))
+					cd[i+2] = append(cd[i+2], strconv.FormatFloat(x, 'f', 10, 64))
 				}
 				for _, x := range calc.EMA(35, quarter).Seven() {
-					cd[i+1] = append(cd[i+1], strconv.FormatFloat(x, 'f', 10, 64))
+					cd[i+2] = append(cd[i+2], strconv.FormatFloat(x, 'f', 10, 64))
 				}
 			}
 			bar.Finish()
