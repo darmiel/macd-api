@@ -52,10 +52,10 @@ func init() {
 
 			/// HEADER
 			cd[0] = []string{"Symbol", "Date"}
-			for i := 0; i < 8; i++ {
+			for i := 7; i >= 0; i-- {
 				cd[0] = append(cd[0], "EMA10T"+strconv.Itoa(i))
 			}
-			for i := 0; i < 8; i++ {
+			for i := 7; i >= 0; i-- {
 				cd[0] = append(cd[0], "EMA35T"+strconv.Itoa(i))
 			}
 			///
@@ -71,10 +71,10 @@ func init() {
 
 				cd[i+2] = append(cd[i+2], c.Symbol)
 				cd[i+2] = append(cd[i+2], quarter[89].DayDate.Format("02.01.2006"))
-				for _, x := range calc.EMA(10, quarter).Seven() {
+				for _, x := range calc.EMA(10, quarter).Seven().Reverse() {
 					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
-				for _, x := range calc.EMA(35, quarter).Seven() {
+				for _, x := range calc.EMA(35, quarter).Seven().Reverse() {
 					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
 			}

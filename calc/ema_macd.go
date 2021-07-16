@@ -19,11 +19,19 @@ func (t T) T(num int) float64 {
 	return t.Min(num)
 }
 
-func (t T) Seven() (res [8]float64) {
+func (t T) Seven() (res T) {
+	res = make(T, 8)
 	for i := 0; i < 8; i++ {
 		res[i] = t.Min(i)
 	}
 	return
+}
+
+func (t T) Reverse() T {
+	for i, j := 0, len(t)-1; i < j; i, j = i+1, j-1 {
+		t[i], t[j] = t[j], t[i]
+	}
+	return t
 }
 
 // requires data to be ordered by date ASC
