@@ -56,7 +56,7 @@ func init() {
 				cd[0] = append(cd[0], "EMA10T"+strconv.Itoa(i))
 			}
 			for i := 7; i >= 0; i-- {
-				cd[0] = append(cd[0], "EMA35T"+strconv.Itoa(i))
+				cd[0] = append(cd[0], "EMA20T"+strconv.Itoa(i))
 			}
 			///
 
@@ -74,7 +74,7 @@ func init() {
 				for _, x := range calc.EMA(10, quarter).Seven().Reverse() {
 					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
-				for _, x := range calc.EMA(35, quarter).Seven().Reverse() {
+				for _, x := range calc.EMA(20, quarter).Seven().Reverse() {
 					cd[i+2] = append(cd[i+2], formatFloat(x, ","))
 				}
 			}
