@@ -11,5 +11,5 @@ require (
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	gorm.io/driver/postgres v1.1.0
-	gorm.io/gorm v1.21.14
+	gorm.io/gorm v1.21.15
 )
